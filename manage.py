@@ -5,7 +5,10 @@ import sys
 
 
 def main():
-    """Run administrative tasks."""
+    """
+    Configura las variables de entorno de Django y ejecuta los comandos
+    de la línea de comandos (como runserver, migrate, etc).
+    """
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'GestorDeAmbientesSena.settings')
     try:
         from django.core.management import execute_from_command_line
