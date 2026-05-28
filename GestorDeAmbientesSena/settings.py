@@ -29,7 +29,7 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
+# Aplicaciones instaladas en el proyecto
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Nuestras aplicaciones personalizadas
     'apps.accounts',
     'apps.bookings',
     'apps.directory',
@@ -54,11 +55,11 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'GestorDeAmbientesSena.urls'
-
+# Configuración del motor de plantillas HTML
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-
+        # Carpeta raíz donde Django buscará los archivos .html
         'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -76,7 +77,7 @@ WSGI_APPLICATION = 'GestorDeAmbientesSena.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
+# Configuración de la base de datos (usando SQLite por defecto)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -106,7 +107,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
-
+# Idioma y zona horaria para Colombia
 LANGUAGE_CODE = 'es-co'
 
 TIME_ZONE = 'America/Bogota'
@@ -118,5 +119,13 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
-
+# URL para acceder a archivos estáticos (CSS, JS, Imágenes)
 STATIC_URL = 'static/'
+
+# Configuración de redirecciones para el sistema de login
+# A dónde va el usuario después de iniciar sesión
+LOGIN_REDIRECT_URL = 'index'
+# A dónde va el usuario después de cerrar sesión
+LOGOUT_REDIRECT_URL = 'login'
+# URL de la página de inicio de sesión
+LOGIN_URL = 'login'

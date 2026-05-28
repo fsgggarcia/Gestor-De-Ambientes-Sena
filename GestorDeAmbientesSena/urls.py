@@ -16,7 +16,34 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-
+from apps.accounts.views import login_view, logout_view, profile_view # Importa las vistas de cuentas
+from apps.bookings.views import booking_list, reserve_view, delete_booking, edit_booking # Importa las vistas de reservas
+from apps.directory.views import directory_list
+from apps.infrastructure.views import environment_list, environment_detail, add_environment, delete_environment, edit_environment, add_sede, edit_sede
+# Definición de las rutas (URLs) de todo el sitio web
 urlpatterns = [
+    # Ruta principal (vacía): muestra la lista de reservas
+    path('', booking_list, name='index'),
+
+    # Panel de administración de Django
     path('admin/', admin.site.urls),
+    
+    # Rutas para el manejo de usuarios (Login, Logout y Dashboard)
+    path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
+    path('profile/', profile_view, name='profile'),
+    
+    # Rutas para las funcionalidades del negocio (Reservas, Directorio, Ambientes)
+    path('bookings/', booking_list, name='booking_list'),
+    path('bookings/delete/<int:booking_id>/', delete_booking, name='delete_booking'), # Ruta para eliminar
+    path('bookings/edit/<int:booking_id>/', edit_booking, name='edit_booking'),     # Ruta para editar
+    path('reserve/<str:ambiente_name>/', reserve_view, name='reserve_view'),
+    path('directory/', directory_list, name='directory_list'),
+    path('environments/', environment_list, name='environment_list'),
+    path('environments/<str:sede_slug>/', environment_detail, name='environment_detail'),
+    path('environments/<str:sede_slug>/add/', add_environment, name='add_environment'), # Ruta para agregar
+    path('environments/<str:sede_slug>/delete/<str:ambiente_name>/', delete_environment, name='delete_environment'), # Ruta para eliminar
+    path('environments/<str:sede_slug>/edit/<str:ambiente_name>/', edit_environment, name='edit_environment'), # Ruta para editar
+    path('sedes/add/', add_sede, name='add_sede'), # Nueva ruta para agregar sede
+    path('sedes/edit/<str:sede_slug>/', edit_sede, name='edit_sede'), # Nueva ruta para editar sede
 ]

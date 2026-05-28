@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Reservas | Gestor de Ambientes{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Botón para regresar y Migas de Pan -->
+    <div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-success fw-bold text-decoration-none">Inicio</a></li>
+                <li class="breadcrumb-item active">Mis Reservas</li>
+            </ol>
+        </nav>
+        <a href="{% url 'index' %}" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 shadow-sm">
+            <i class="bi bi-arrow-left"></i> Volver al Inicio
+        </a>
+    </div>
+
+    <div class="mb-4">
+        <h2 class="fw-bold">Mis Reservas</h2>
+        <p class="text-muted">Aquí puedes ver, modificar o eliminar tus reservas.</p>
+    </div>
+
+    {% if reservations %}
+    <div class="table-responsive">
+        <table class="table table-hover table-striped shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            <thead class="bg-sena text-white">
+                <tr>
+                    <th scope="col">Ambiente</th>
+                    <th scope="col">Instructor</th>
+                    <th scope="col">Periodo</th>
+                    <th scope="col">Horario</th>
+                    <th scope="col">Jornada</th>
+                    <th scope="col">Reservado por</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in reservations %}
+                <tr>
+                    <td>{{ booking.ambiente }}</td>
+                    <td>{{ booking.instructor }}</td>
+                    <td>{{ booking.fecha_inicio }} al {{ booking.fecha_fin }}</td>
+                    <td>{{ booking.hora_inicio }} - {{ booking.hora_fin }}</td>
+                    <td>
+                        {% if booking.jornada == 'DÍA' %}
+                            <span class="badge bg-info text-dark">☀️ {{ booking.jornada }}</span>
+                        {% elif booking.jornada == 'TARDE' %}
+                            <span class="badge bg-warning text-dark">⛅ {{ booking.jornada }}</span>
+                        {% else %}
+                            <span class="badge bg-dark text-white">🌙 {{ booking.jornada }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ booking.user }}</td>
+                    <td>
+                        <a href="{% url 'edit_booking' booking.id %}" class="btn btn-sm btn-action btn-modify shadow-sm me-2 px-3">
+                            <i class="bi bi-pencil-square"></i>
+                            Modificar
+                        </a>
+                        <a href="{% url 'delete_booking' booking.id %}" class="btn btn-sm btn-action btn-delete shadow-sm px-3" onclick="return confirm('¿Estás seguro de que quieres eliminar esta reserva?');">
+                            <i class="bi bi-trash"></i>
+                            Eliminar
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center" role="alert">
+        No tienes reservas programadas. ¡Anímate a reservar un ambiente!
+        <br><a href="{% url 'index' %}" class="alert-link">Ir a Sedes</a>
+    </div>
+    {% endif %}
+</div>
+<style> .bg-sena { background-color: var(--sena-green); } </style>
+{% endblock %}

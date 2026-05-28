@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Ambientes | Gestor de Ambientes{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-bold text-dark display-5">Sedes Institucionales</h1>
+        <p class="text-muted lead">Seleccione una sede para gestionar sus ambientes de formación</p>
+        <div class="mx-auto" style="width: 80px; height: 5px; background-color: var(--sena-green); border-radius: 10px;"></div>
+    </div>
+
+    <!-- Formulario para agregar nueva sede -->
+    <div class="card border-0 shadow-sm p-4 mb-5" style="border-radius: 15px;">
+        <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-success"></i>Registrar Nueva Sede</h5>
+        <form action="{% url 'add_sede' %}" method="POST" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-4">
+                <input type="text" name="nombre_sede" class="form-control" placeholder="Nombre de la sede" required>
+            </div>
+            <div class="col-md-5">
+                <input type="text" name="descripcion" class="form-control" placeholder="Descripción breve de la sede">
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-sena w-100 fw-bold">Agregar Sede</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        {% for slug, data in sedes.items %}
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm sede-card position-relative">
+                <div class="card-body text-center p-5">
+                    <div class="icon-circle bg-light mb-4 mx-auto d-flex align-items-center justify-content-center">
+                        <i class="bi {{ data.icon }} text-success" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h3 class="fw-bold mb-3">{{ data.nombre }}</h3>
+                    <p class="text-muted small mb-4">{{ data.descripcion }}</p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'environment_detail' slug %}" class="btn btn-sena py-2 fw-bold shadow-sm">Entrar a Sede</a>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editSedeModal{{ forloop.counter }}">
+                            <i class="bi bi-pencil-square me-1"></i>Modificar Info
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Modificar Sede -->
+        <div class="modal fade" id="editSedeModal{{ forloop.counter }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Editar Sede: {{ data.nombre }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action="{% url 'edit_sede' slug %}" method="POST">
+                        {% csrf_token %}
+                        <div class="modal-body text-start">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Nombre de la sede</label>
+                                <input type="text" name="nuevo_nombre" class="form-control" value="{{ data.nombre }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Descripción</label>
+                                <textarea name="nueva_descripcion" class="form-control" rows="3">{{ data.descripcion }}</textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-sena">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .icon-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    .sede-card {
+        border-radius: 20px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .sede-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12) !important;
+    }
+    .sede-card:hover .icon-circle {
+        background-color: #e8f5e9 !important;
+        transform: scale(1.1);
+    }
+</style>
+
+<!-- Cargamos los iconos de Bootstrap -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+{% endblock %}

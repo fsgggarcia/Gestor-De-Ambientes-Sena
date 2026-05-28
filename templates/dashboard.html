@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Gestor de Ambientes{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h2 class="fw-bold">Panel de Control</h2>
+        <p class="text-muted">Bienvenido al sistema de gestión de ambientes de formación.</p>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 mb-3">
+            <h4>Ambientes</h4>
+            <p>Consulta la disponibilidad de las aulas.</p>
+            <a href="{% url 'environment_list' %}" class="btn btn-sena">Ver Ambientes</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 mb-3">
+            <h4>Reservas</h4>
+            <p>Gestiona tus solicitudes de espacio.</p>
+            <a href="{% url 'booking_list' %}" class="btn btn-sena">Mis Reservas</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3 mb-3">
+            <h4>Directorio</h4>
+            <p>Contacta con los instructores y encargados.</p>
+            <a href="{% url 'directory_list' %}" class="btn btn-sena">Ver Directorio</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
