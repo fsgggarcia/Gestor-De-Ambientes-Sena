@@ -24,11 +24,23 @@ def obtener_jornada(hora_str):
 
 @login_required
 def booking_list(request):
-    # Pasa todas las reservas simuladas a la plantilla
+    # FILTRO: Ahora solo mostramos las reservas que pertenecen al usuario actual
+    mis_reservas = [res for res in reservations_db if res['user'] == request.user.username]
     context = {
-        'reservations': reservations_db,
+        'reservations': mis_reservas,
+        'titulo_pagina': 'Mis Reservas Personales'
     }
     return render(request, 'booking_list.html', context)
+
+@login_required
+def environment_bookings(request, ambiente_name):
+    # FILTRO INDIVIDUAL: Obtenemos solo las reservas del ambiente solicitado
+    reservas_ambiente = [res for res in reservations_db if res['ambiente'] == ambiente_name]
+    context = {
+        'ambiente': ambiente_name,
+        'reservations': reservas_ambiente,
+    }
+    return render(request, 'environment_bookings.html', context)
 
 # Vista para el formulario de reserva
 @login_required

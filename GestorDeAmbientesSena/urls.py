@@ -17,13 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from apps.accounts.views import login_view, logout_view, profile_view # Importa las vistas de cuentas
-from apps.bookings.views import booking_list, reserve_view, delete_booking, edit_booking # Importa las vistas de reservas
+from apps.bookings.views import booking_list, reserve_view, delete_booking, edit_booking, environment_bookings # Importa las vistas de reservas
 from apps.directory.views import directory_list
 from apps.infrastructure.views import environment_list, environment_detail, add_environment, delete_environment, edit_environment, add_sede, edit_sede
 # Definición de las rutas (URLs) de todo el sitio web
 urlpatterns = [
-    # Ruta principal (vacía): muestra la lista de reservas
-    path('', booking_list, name='index'),
+    # Ruta principal (vacía): Ahora redirigimos a la lista de sedes para mejor flujo
+    path('', environment_list, name='index'),
 
     # Panel de administración de Django
     path('admin/', admin.site.urls),
@@ -35,6 +35,7 @@ urlpatterns = [
     
     # Rutas para las funcionalidades del negocio (Reservas, Directorio, Ambientes)
     path('bookings/', booking_list, name='booking_list'),
+    path('bookings/ambiente/<str:ambiente_name>/', environment_bookings, name='environment_bookings'), # Nueva ruta individual
     path('bookings/delete/<int:booking_id>/', delete_booking, name='delete_booking'), # Ruta para eliminar
     path('bookings/edit/<int:booking_id>/', edit_booking, name='edit_booking'),     # Ruta para editar
     path('reserve/<str:ambiente_name>/', reserve_view, name='reserve_view'),

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Reservas de {{ ambiente }} | Gestor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4 d-flex align-items-center justify-content-between">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-success fw-bold text-decoration-none">Sedes</a></li>
+                <li class="breadcrumb-item active">Reservas de {{ ambiente }}</li>
+            </ol>
+        </nav>
+        <a href="javascript:history.back()" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 15px;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="fw-bold mb-1">Agenda de: {{ ambiente }}</h2>
+                <p class="text-muted">Mostrando todas las ocupaciones programadas para este ambiente.</p>
+            </div>
+            <a href="{% url 'reserve_view' ambiente %}" class="btn btn-sena fw-bold">
+                <i class="bi bi-plus-lg"></i> Nueva Reserva
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <table class="table table-hover align-middle mb-0 bg-white">
+            <thead class="table-dark">
+                <tr>
+                    <th>Instructor</th>
+                    <th>Materia / Programa</th>
+                    <th>Fecha</th>
+                    <th>Horario</th>
+                    <th>Jornada</th>
+                    <th>Estado / Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in reservations %}
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{ res.instructor }}</div>
+                        <small class="text-muted">Por: {{ res.user }}</small>
+                    </td>
+                    <td>{{ res.materia }}</td>
+                    <td>
+                        <i class="bi bi-calendar3 me-1"></i> {{ res.fecha_inicio }} <br>
+                        <small class="text-muted">al {{ res.fecha_fin }}</small>
+                    </td>
+                    <td>{{ res.hora_inicio }} - {{ res.hora_fin }}</td>
+                    <td><span class="badge rounded-pill bg-info text-dark">{{ res.jornada }}</span></td>
+                    <td>
+                        {% if user.username == res.user or user.is_superuser %}
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'edit_booking' res.id %}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'delete_booking' res.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar reserva?')" title="Eliminar"><i class="bi bi-trash"></i></a>
+                        </div>
+                        {% else %}
+                        <span class="badge bg-secondary">Reservado</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="bi bi-calendar-x fs-1 d-block mb-3"></i>
+                        No hay reservas registradas para este ambiente.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
