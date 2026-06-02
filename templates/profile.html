@@ -1,82 +1,62 @@
 {% extends 'base.html' %}
 
-{% block title %}Mi Perfil | Gestor{% endblock %}
+{% block title %}Mi Perfil | SENA{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Botón para regresar y Migas de Pan -->
-    <div class="mb-4 d-flex align-items-center justify-content-between">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-success fw-bold text-decoration-none">Inicio</a></li>
-                <li class="breadcrumb-item active">Mi Perfil</li>
-            </ol>
-        </nav>
-        <a href="{% url 'index' %}" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2">
-            <i class="bi bi-arrow-left"></i> Regresar
-        </a>
-    </div>
-
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
-            <div class="card border-0 shadow-sm" style="border-radius: 20px; overflow: hidden;">
-                <!-- Cabecera del Perfil -->
-                <div class="card-header bg-white border-0 pt-5 pb-4 text-center">
-                    <div class="icon-circle bg-light mb-3 mx-auto d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #f8f9fa;">
-                        <i class="bi bi-person-bounding-box text-success" style="font-size: 3.5rem;"></i>
-                    </div>
-                    <h2 class="fw-bold mb-0 text-dark">Configuración de Cuenta</h2>
-                    <span class="badge bg-light text-success border border-success-subtle px-3 py-2 mt-2">Usuario: {{ user.username }}</span>
-                </div>
-
-                <div class="card-body p-4 p-md-5 pt-0">
-                    <form method="POST">
-                        {% csrf_token %}
-                        
-                        <h5 class="text-uppercase text-muted fw-bold small mb-4" style="letter-spacing: 1px;">Datos Personales</h5>
-                        
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label for="first_name" class="form-label fw-semibold">Nombre</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
-                                    <input type="text" name="first_name" id="first_name" class="form-control border-start-0 ps-0" value="{{ user.first_name }}" placeholder="Tu nombre">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="last_name" class="form-label fw-semibold">Apellido</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
-                                    <input type="text" name="last_name" id="last_name" class="form-control border-start-0 ps-0" value="{{ user.last_name }}" placeholder="Tu apellido">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-5">
-                            <label for="email" class="form-label fw-semibold">Correo Electrónico</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
-                                <input type="email" name="email" id="email" class="form-control border-start-0 ps-0" value="{{ user.email }}" placeholder="ejemplo@sena.edu.co">
-                            </div>
-                        </div>
-
-                        <div class="d-flex flex-column flex-md-row gap-3">
-                            <button type="submit" class="btn btn-sena px-5 py-2 fw-bold flex-grow-1 shadow-sm d-flex align-items-center justify-content-center gap-2">
-                                <i class="bi bi-save2"></i> Guardar Cambios
-                            </button>
-                            <a href="{% url 'logout' %}" class="btn btn-outline-danger px-4 py-2 d-flex align-items-center justify-content-center gap-2">
-                                <i class="bi bi-box-arrow-right"></i> Salir del Sistema
-                            </a>
-                        </div>
-                    </form>
-                </div>
+<div class="row justify-content-center py-5">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow p-4" style="border-radius: 20px;">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-circle text-success" style="font-size: 4rem;"></i>
+                <h2 class="fw-bold mt-2">Mi Perfil</h2>
+                <p class="text-muted small">Actualiza tu información personal</p>
             </div>
 
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-uppercase">Nombre de usuario</label>
+                    <input type="text" class="form-control bg-light border-0 fw-bold" value="{{ user.username }}" readonly>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small text-uppercase">Nombre</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" placeholder="Tu nombre">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold small text-uppercase">Apellido</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" placeholder="Tu apellido">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-uppercase">Correo Electrónico</label>
+                    <input type="email" name="email" class="form-control" value="{{ user.email }}" placeholder="ejemplo@sena.edu.co">
+                </div>
+                
+                <div class="d-grid gap-2 mb-5">
+                    <button type="submit" class="btn btn-sena py-3 fw-bold shadow-sm">
+                        <i class="bi bi-person-check me-2"></i>Actualizar mis datos
+                    </button>
+                </div>
+            </form>
+
+            <div class="p-4 bg-light rounded-4 border-start border-success border-5 shadow-sm">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-lock-fill me-2 text-success"></i>Gestión de Usuarios</h5>
+                <p class="text-muted small mb-4">Administra el acceso de nuevos instructores o personal administrativo a la plataforma desde aquí.</p>
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'register' %}" class="btn btn-outline-success fw-bold d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-person-plus-fill"></i> Registro Estándar
+                    </a>
+                    <a href="{% url 'custom_register' %}" class="btn btn-outline-primary fw-bold d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-person-vcard"></i> Registro Manual (Tabla Custom)
+                    </a>
+                </div>
+            </div>
             <div class="text-center mt-4">
-                <p class="text-muted small">Registrado desde: {{ user.date_joined|date:"d M, Y" }}</p>
+                <a href="{% url 'logout' %}" class="text-danger small fw-bold text-decoration-none"><i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión</a>
             </div>
         </div>
     </div>
 </div>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 {% endblock %}

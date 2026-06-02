@@ -28,18 +28,19 @@
     </div>
 
     <div class="row g-4 justify-content-center">
-        {% for slug, data in sedes.items %}
+        {% for sede in sedes %}
         <div class="col-lg-4 col-md-6">
             <div class="card h-100 border-0 shadow-sm sede-card position-relative">
                 <div class="card-body text-center p-5">
                     <div class="icon-circle bg-light mb-4 mx-auto d-flex align-items-center justify-content-center">
-                        <i class="bi {{ data.icon }} text-success" style="font-size: 3.5rem;"></i>
+                        <i class="bi {{ sede.icon }} text-success" style="font-size: 3.5rem;"></i>
                     </div>
-                    <h3 class="fw-bold mb-3">{{ data.nombre }}</h3>
-                    <p class="text-muted small mb-4">{{ data.descripcion }}</p>
+                    <h3 class="fw-bold mb-3">{{ sede.nombre }}</h3>
+                    <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-25 mb-3">{{ sede.ambientes.count }} Ambientes registrados</span>
+                    <p class="text-muted small mb-4">{{ sede.descripcion }}</p>
                     
                     <div class="d-grid gap-2">
-                        <a href="{% url 'environment_detail' slug %}" class="btn btn-sena py-2 fw-bold shadow-sm">Entrar a Sede</a>
+                        <a href="{% url 'environment_detail' sede.slug %}" class="btn btn-sena py-2 fw-bold shadow-sm">Entrar a Sede</a>
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editSedeModal{{ forloop.counter }}">
                             <i class="bi bi-pencil-square me-1"></i>Modificar Info
                         </button>
@@ -53,19 +54,19 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title fw-bold">Editar Sede: {{ data.nombre }}</h5>
+                        <h5 class="modal-title fw-bold">Editar Sede: {{ sede.nombre }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form action="{% url 'edit_sede' slug %}" method="POST">
+                    <form action="{% url 'edit_sede' sede.slug %}" method="POST">
                         {% csrf_token %}
                         <div class="modal-body text-start">
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Nombre de la sede</label>
-                                <input type="text" name="nuevo_nombre" class="form-control" value="{{ data.nombre }}" required>
+                                <input type="text" name="nuevo_nombre" class="form-control" value="{{ sede.nombre }}" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Descripción</label>
-                                <textarea name="nueva_descripcion" class="form-control" rows="3">{{ data.descripcion }}</textarea>
+                                <textarea name="nueva_descripcion" class="form-control" rows="3">{{ sede.descripcion }}</textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -74,6 +75,14 @@
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="p-5 bg-white shadow-sm rounded-4 border border-dashed">
+                <i class="bi bi-building-add text-muted display-1"></i>
+                <p class="text-muted mt-3 fs-5">No hay sedes registradas aún.</p>
+                <p class="text-muted small">Utilice el formulario de arriba para comenzar a gestionar sus sedes institucionales.</p>
             </div>
         </div>
         {% endfor %}

@@ -1,16 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from apps.directory.views import instructores_db # Importamos el registro de instructores
-
-# Create your views here.
-# --- SIMULACIÓN DE BASE DE DATOS (TEMPORAL) ---
-# En una aplicación real, esto sería un modelo de Django en la base de datos.
-# Usamos una lista global para simular el almacenamiento de reservas.
-# Cada reserva es un diccionario con un ID único.
-reservations_db = []
-next_reservation_id = 1
-# ----------------------------------------------
+from .models import Reserva
+from apps.infrastructure.models import Ambiente
+from apps.directory.models import Instructor
 
 # Función auxiliar para determinar la jornada según la hora de inicio
 def obtener_jornada(hora_str):
@@ -24,8 +17,8 @@ def obtener_jornada(hora_str):
 
 @login_required
 def booking_list(request):
-    # FILTRO: Ahora solo mostramos las reservas que pertenecen al usuario actual
-    mis_reservas = [res for res in reservations_db if res['user'] == request.user.username]
+    # Filtramos usando el ORM de Django
+    mis_reservas = Reserva.objects.filter(user=request.user).order_by('-fecha_inicio')
     context = {
         'reservations': mis_reservas,
         'titulo_pagina': 'Mis Reservas Personales'
@@ -34,8 +27,8 @@ def booking_list(request):
 
 @login_required
 def environment_bookings(request, ambiente_name):
-    # FILTRO INDIVIDUAL: Obtenemos solo las reservas del ambiente solicitado
-    reservas_ambiente = [res for res in reservations_db if res['ambiente'] == ambiente_name]
+    # Filtramos por el nombre del ambiente relacionado
+    reservas_ambiente = Reserva.objects.filter(ambiente__nombre=ambiente_name)
     context = {
         'ambiente': ambiente_name,
         'reservations': reservas_ambiente,
@@ -45,10 +38,7 @@ def environment_bookings(request, ambiente_name):
 # Vista para el formulario de reserva
 @login_required
 def reserve_view(request, ambiente_name):
-    global next_reservation_id
-
     if request.method == "POST":
-        # Aquí capturamos los datos enviados por el formulario
         instructor = request.POST.get('instructor').upper()
         materia = request.POST.get('materia').upper()
         inicio = request.POST.get('hora_inicio')
@@ -56,111 +46,81 @@ def reserve_view(request, ambiente_name):
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_fin = request.POST.get('fecha_fin')
 
-        # REGISTRO AUTOMÁTICO: Si el instructor no está en el directorio, lo agregamos
-        if not any(i['nombre'] == instructor for i in instructores_db):
-            instructores_db.append({'nombre': instructor, 'materia': materia})
-            messages.info(request, f"Nuevo instructor '{instructor}' añadido al directorio.")
+        # Validación: Hora de fin debe ser mayor a inicio
+        if inicio >= fin:
+            messages.error(request, "La hora de fin debe ser posterior a la hora de inicio.")
+            return render(request, 'reserve_form.html', {'ambiente': ambiente_name, 'booking': request.POST})
 
-        # Validación de disponibilidad: Evita que se crucen reservas en el mismo ambiente
-        for res in reservations_db:
-            if res['ambiente'] == ambiente_name:
-                # Verificar si las fechas se solapan
-                fecha_solapada = fecha_inicio <= res['fecha_fin'] and fecha_fin >= res['fecha_inicio']
-                # Verificar si las horas se solapan
-                hora_solapada = inicio < res['hora_fin'] and fin > res['hora_inicio']
+        # Obtener o crear instructor en el directorio
+        Instructor.objects.get_or_create(nombre=instructor, defaults={'materia': materia})
+        
+        # Obtener objeto ambiente
+        ambiente_obj = get_object_or_404(Ambiente, nombre=ambiente_name)
 
-                if fecha_solapada and hora_solapada:
-                    messages.error(request, f"El ambiente ya está ocupado por {res['instructor']} del {res['fecha_inicio']} al {res['fecha_fin']} en ese horario.")
-                    return render(request, 'reserve_form.html', {'ambiente': ambiente_name, 'booking': request.POST})
+        # Validación de disponibilidad en la DB
+        solapada = Reserva.objects.filter(
+            ambiente=ambiente_obj,
+            fecha_inicio__lte=fecha_fin,
+            fecha_fin__gte=fecha_inicio,
+            hora_inicio__lt=fin,
+            hora_fin__gt=inicio
+        ).exists()
 
-        # Creamos una nueva reserva y la añadimos a nuestra "base de datos" simulada
-        new_reservation = {
-            'id': next_reservation_id,
-            'ambiente': ambiente_name,
-            'instructor': instructor,
-            'materia': materia,
-            'hora_inicio': inicio,
-            'hora_fin': fin,
-            'fecha_inicio': fecha_inicio,
-            'fecha_fin': fecha_fin,
-            'user': request.user.username, # Guardamos quién hizo la reserva
-            'jornada': obtener_jornada(inicio) # Calculamos la jornada
-        }
-        reservations_db.append(new_reservation)
-        next_reservation_id += 1
+        if solapada:
+            messages.error(request, "El ambiente ya está ocupado en ese horario.")
+            return render(request, 'reserve_form.html', {'ambiente': ambiente_name, 'booking': request.POST})
+
+        # Guardar en la base de datos
+        Reserva.objects.create(
+            ambiente=ambiente_obj,
+            instructor=instructor,
+            materia=materia,
+            hora_inicio=inicio,
+            hora_fin=fin,
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            user=request.user,
+            jornada=obtener_jornada(inicio)
+        )
 
         messages.success(request, f"Reserva exitosa para {ambiente_name} por {instructor}.")
-        # Redirigimos a la lista de reservas para que el usuario vea el resultado inmediatamente
         return redirect('booking_list')
         
-    # Pasamos la lista de instructores para las sugerencias del formulario (datalist)
-    return render(request, 'reserve_form.html', {'ambiente': ambiente_name, 'instructores': instructores_db})
+    return render(request, 'reserve_form.html', {'ambiente': ambiente_name, 'instructores': Instructor.objects.all()})
 
-# Vista para eliminar una reserva
 @login_required
 def delete_booking(request, booking_id):
-    global reservations_db
-    # Buscamos la reserva por ID
-    reservation_to_delete = next((r for r in reservations_db if r['id'] == booking_id), None)
-
-    if reservation_to_delete:
-        # Solo el usuario que hizo la reserva o un superusuario puede eliminarla
-        if request.user.username == reservation_to_delete['user'] or request.user.is_superuser:
-            reservations_db.remove(reservation_to_delete)
-            messages.success(request, f"Reserva para {reservation_to_delete['ambiente']} eliminada exitosamente.")
-        else:
-            messages.error(request, "No tienes permiso para eliminar esta reserva.")
+    reserva = get_object_or_404(Reserva, id=booking_id)
+    if request.user == reserva.user or request.user.is_superuser:
+        reserva.delete()
+        messages.success(request, "Reserva eliminada exitosamente.")
     else:
-        messages.error(request, "Reserva no encontrada.")
+        messages.error(request, "No tienes permiso para eliminar esta reserva.")
     return redirect('booking_list')
 
-# Vista para editar una reserva
 @login_required
 def edit_booking(request, booking_id):
-    global reservations_db
-    reservation_to_edit = next((r for r in reservations_db if r['id'] == booking_id), None)
+    reserva = get_object_or_404(Reserva, id=booking_id)
 
-    if not reservation_to_edit:
-        messages.error(request, "Reserva no encontrada para editar.")
-        return redirect('booking_list')
-    
-    # Solo el usuario que hizo la reserva o un superusuario puede editarla
-    if not (request.user.username == reservation_to_edit['user'] or request.user.is_superuser):
+    if not (request.user == reserva.user or request.user.is_superuser):
         messages.error(request, "No tienes permiso para editar esta reserva.")
         return redirect('booking_list')
 
     if request.method == "POST":
-        instructor = request.POST.get('instructor').upper()
-        materia = request.POST.get('materia').upper()
-        inicio = request.POST.get('hora_inicio')
-        fin = request.POST.get('hora_fin')
-        fecha_inicio = request.POST.get('fecha_inicio')
-        fecha_fin = request.POST.get('fecha_fin')
+        reserva.instructor = request.POST.get('instructor').upper()
+        reserva.materia = request.POST.get('materia').upper()
+        reserva.hora_inicio = request.POST.get('hora_inicio')
+        reserva.hora_fin = request.POST.get('hora_fin')
+        reserva.fecha_inicio = request.POST.get('fecha_inicio')
+        reserva.fecha_fin = request.POST.get('fecha_fin')
+        reserva.jornada = obtener_jornada(reserva.hora_inicio)
+        reserva.save()
 
-        # Validación de disponibilidad al editar (excluyendo la reserva actual)
-        for res in reservations_db:
-            if res['id'] != booking_id and res['ambiente'] == reservation_to_edit['ambiente']:
-                if (fecha_inicio <= res['fecha_fin'] and fecha_fin >= res['fecha_inicio']) and \
-                   (inicio < res['hora_fin'] and fin > res['hora_inicio']):
-                    messages.error(request, "Error: Los nuevos datos coinciden con otra reserva existente.")
-                    return render(request, 'reserve_form.html', {'ambiente': reservation_to_edit['ambiente'], 'booking': request.POST})
-
-        reservation_to_edit.update({
-            'instructor': instructor,
-            'materia': materia,
-            'hora_inicio': inicio,
-            'hora_fin': fin,
-            'fecha_inicio': fecha_inicio,
-            'fecha_fin': fecha_fin,
-            'jornada': obtener_jornada(inicio)
-        })
-
-        # También actualizamos el directorio al editar si es necesario
-        if not any(i['nombre'] == instructor for i in instructores_db):
-            instructores_db.append({'nombre': instructor, 'materia': materia})
-
-        messages.success(request, f"Reserva para {reservation_to_edit['ambiente']} actualizada exitosamente.")
+        messages.success(request, "Reserva actualizada exitosamente.")
         return redirect('booking_list')
     
-    # Si es GET, mostramos el formulario pre-rellenado
-    return render(request, 'reserve_form.html', {'ambiente': reservation_to_edit['ambiente'], 'booking': reservation_to_edit, 'instructores': instructores_db})
+    return render(request, 'reserve_form.html', {
+        'ambiente': reserva.ambiente.nombre, 
+        'booking': reserva, 
+        'instructores': Instructor.objects.all()
+    })

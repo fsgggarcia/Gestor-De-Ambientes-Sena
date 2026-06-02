@@ -36,23 +36,24 @@
 
     <!-- Rejilla de Ambientes de la Sede -->
     <div class="row row-cols-1 g-3">
-        {% for ambiente in sede.ambientes %}
+        {% for ambiente in ambientes %}
         <div class="col">
             <!-- Cada ambiente organizado en una sola fila horizontal con diseño limpio -->
-            <div class="card border-0 shadow-sm p-2 environment-row-card" style="border-radius: 12px;">
+            <div class="card border-0 shadow-sm p-2 environment-row-card position-relative" style="border-radius: 12px;">
                 <div class="card-body d-flex align-items-center justify-content-between flex-wrap py-2">
                     <div class="d-flex align-items-center">
                         <!-- Icono representativo y nombre del ambiente -->
                         <i class="bi bi-door-open-fill text-success fs-4 me-3"></i>
                         <div>
-                            <a href="{% url 'environment_bookings' ambiente %}" class="text-decoration-none text-dark">
-                                <h5 class="card-title fw-bold mb-0">{{ ambiente }}</h5>
+                            <a href="{% url 'environment_bookings' ambiente.nombre %}" class="text-decoration-none text-dark stretched-link">
+                                <h5 class="card-title fw-bold mb-0">{{ ambiente.nombre }}</h5>
                             </a>
+                            <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Ambiente de formación técnica</small>
                         </div>
                     </div>
                     <!-- Botón de acción alineado a la derecha -->
-                    <div class="mt-2 mt-md-0 d-flex gap-2 align-items-center">
-                        <a href="{% url 'reserve_view' ambiente %}" class="btn btn-sena px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
+                    <div class="mt-2 mt-md-0 d-flex gap-2 align-items-center position-relative" style="z-index: 2;">
+                        <a href="{% url 'reserve_view' ambiente.nombre %}" class="btn btn-sena px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
                             <i class="bi bi-calendar-check"></i>
                             Reservar
                         </a>
@@ -63,7 +64,7 @@
                         </button>
 
                         <!-- Botón para eliminar ambiente -->
-                        <a href="{% url 'delete_environment' sede_slug ambiente %}" class="btn btn-sm btn-action btn-delete shadow-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar este ambiente?')" title="Eliminar">
+                        <a href="{% url 'delete_environment' sede_slug ambiente.nombre %}" class="btn btn-sm btn-action btn-delete shadow-sm" onclick="return confirm('¿Estás seguro de que deseas eliminar este ambiente?')" title="Eliminar">
                             <i class="bi bi-trash fs-6"></i>
                         </a>
                     </div>
@@ -76,14 +77,14 @@
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title fw-bold">Modificar Ambiente: {{ ambiente }}</h5>
+                        <h5 class="modal-title fw-bold">Modificar Ambiente: {{ ambiente.nombre }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form action="{% url 'edit_environment' sede_slug ambiente %}" method="POST">
+                    <form action="{% url 'edit_environment' sede_slug ambiente.nombre %}" method="POST">
                         {% csrf_token %}
                         <div class="modal-body text-start">
                             <label class="form-label fw-semibold">Nuevo nombre del ambiente</label>
-                            <input type="text" name="nuevo_nombre" class="form-control" value="{{ ambiente }}" required>
+                            <input type="text" name="nuevo_nombre" class="form-control" value="{{ ambiente.nombre }}" required>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

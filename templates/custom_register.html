@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro Manual | SENA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center py-5" style="min-height: 80vh;">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-lg p-5" style="border-radius: 25px;">
+            <div class="text-center mb-4">
+                <div class="bg-primary bg-opacity-10 d-inline-block p-4 rounded-circle mb-3">
+                    <i class="bi bi-person-vcard text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h2 class="fw-bold">Registro Manual</h2>
+                <p class="text-muted small">Carga directa a la base de datos de cuentas personalizadas</p>
+            </div>
+            
+            <!-- Formulario manual sin Django Forms -->
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-uppercase text-secondary">Nombre de Usuario</label>
+                    <input type="text" name="username" class="form-control" placeholder="Ingrese nombre de usuario" required>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-uppercase text-secondary">Contraseña</label>
+                    <input type="password" name="password" class="form-control" placeholder="Ingrese contraseña" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-uppercase text-secondary">Rol Asignado</label>
+                    <select name="role_id" class="form-select">
+                        <option value="">Seleccione un rol...</option>
+                        {% for r in roles %}
+                        <option value="{{ r.id }}">{{ r.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Este registro afecta exclusivamente a la tabla personalizada de cuentas.</div>
+                </div>
+                
+                <div class="d-grid gap-3">
+                    <button type="submit" class="btn btn-primary py-3 fw-bold shadow-sm">
+                        <i class="bi bi-save me-2"></i>Guardar en Base de Datos
+                    </button>
+                    <a href="{% url 'profile' %}" class="btn btn-light text-muted fw-bold py-2">
+                        Cancelar y volver
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

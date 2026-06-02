@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Usuario | SENA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center py-5" style="min-height: 80vh;">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-lg p-4" style="border-radius: 20px;">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-plus-fill text-success" style="font-size: 4rem;"></i>
+                <h2 class="fw-bold mt-2">Nuevo Usuario</h2>
+                <p class="text-muted">Ingresa los datos para registrar un nuevo integrante</p>
+            </div>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <div class="register-form-container">
+                    {{ form.as_p }}
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-sena py-2 fw-bold shadow-sm">
+                        <i class="bi bi-check-circle me-2"></i>Confirmar Registro
+                    </button>
+                    <a href="{% url 'profile' %}" class="btn btn-light text-muted fw-bold">Cancelar y volver al Perfil</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilizado básico para que los campos automáticos de Django luzcan bien con Bootstrap */
+    .register-form-container p {
+        margin-bottom: 1.2rem;
+    }
+    .register-form-container label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #444;
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+    .register-form-container input {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+    }
+    .register-form-container .helptext {
+        font-size: 0.75rem;
+        color: #6c757d;
+        display: block;
+        margin-top: 0.2rem;
+    }
+</style>
+{% endblock %}

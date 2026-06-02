@@ -1,20 +1,18 @@
 from django.db import models
+from django.contrib.auth.models import User
+from apps.infrastructure.models import Ambiente
 
-class reserves(models.Model):
-    user_id = models.ForeignKey('accounts.user', on_delete=models.CASCADE)
-    environments_id = models.ForeignKey('infrastructure.environments', on_delete=models.CASCADE)
-    people_id = models.ForeignKey('directory.people', on_delete=models.SET_NULL, null=True, blank=True)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    
-    class Meta:
-        db_table = 'bookings_reserves'
-        unique_together = ['environments_id', 'start_date', 'end_date']
+class Reserva(models.Model):
+    ambiente = models.ForeignKey(Ambiente, on_delete=models.CASCADE)
+    instructor = models.CharField(max_length=150)
+    materia = models.CharField(max_length=150)
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    jornada = models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-class days(models.Model):
-    reserves_id = models.ForeignKey('reserves', on_delete=models.CASCADE)
-    date = models.DateField()
-    
-    class Meta:
-        db_table = 'bookings_days'
-        unique_together = ['reserves_id', 'date']
+    def __str__(self):
+        return f"{self.ambiente.nombre} - {self.instructor}"
