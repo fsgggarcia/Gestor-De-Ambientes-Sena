@@ -1,16 +1,15 @@
 from django.db import models
-from django.contrib.auth.models import User
 from apps.infrastructure.models import Ambiente
 
 class Reserva(models.Model):
     ambiente = models.ForeignKey(Ambiente, on_delete=models.CASCADE)
-    instructor = models.CharField(max_length=150)
-    materia = models.CharField(max_length=150)
+    instructor = models.ForeignKey('directory.Instructor', on_delete=models.CASCADE)
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # Cambiamos a tu modelo personalizado
+    user = models.ForeignKey('accounts.user', on_delete=models.CASCADE)
     jornada = models.CharField(max_length=10)
     created_at = models.DateTimeField(auto_now_add=True)
 

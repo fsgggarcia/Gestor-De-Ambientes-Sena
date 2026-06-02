@@ -1,19 +1,20 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from apps.bookings.models import Reserva # Importamos el modelo de la DB
 from .models import Sede, Ambiente
 from django.utils.text import slugify
 
 # Vista para listar las sedes y ambientes
-@login_required
 def environment_list(request):
+    if not request.session.get('user_id'):
+        return redirect('login')
     sedes = Sede.objects.all()
     return render(request, 'environment_list.html', {'sedes': sedes})
 
 # Vista para mostrar los ambientes específicos de una sede
-@login_required
 def environment_detail(request, sede_slug):
+    if not request.session.get('user_id'):
+        return redirect('login')
     sede = get_object_or_404(Sede, slug=sede_slug)
     ambientes = sede.ambientes.all()
 
@@ -26,8 +27,10 @@ def environment_detail(request, sede_slug):
     return render(request, 'environment_detail.html', context)
 
 # Vista para agregar un nuevo ambiente a una sede
-@login_required
 def add_environment(request, sede_slug):
+    if not request.session.get('user_id'):
+        return redirect('login')
+    
     if request.method == "POST":
         sede = get_object_or_404(Sede, slug=sede_slug)
         nombre = request.POST.get('nombre_ambiente').upper()
@@ -37,8 +40,10 @@ def add_environment(request, sede_slug):
     return redirect('environment_detail', sede_slug=sede_slug)
 
 # Vista para eliminar un ambiente de una sede
-@login_required
 def delete_environment(request, sede_slug, ambiente_name):
+    if not request.session.get('user_id'):
+        return redirect('login')
+
     sede = get_object_or_404(Sede, slug=sede_slug)
     ambiente = get_object_or_404(Ambiente, nombre=ambiente_name, sede=sede)
     ambiente.delete()
@@ -46,8 +51,10 @@ def delete_environment(request, sede_slug, ambiente_name):
     return redirect('environment_detail', sede_slug=sede_slug)
 
 # Vista para modificar el nombre de un ambiente existente
-@login_required
 def edit_environment(request, sede_slug, ambiente_name):
+    if not request.session.get('user_id'):
+        return redirect('login')
+
     if request.method == "POST":
         sede = get_object_or_404(Sede, slug=sede_slug)
         ambiente = get_object_or_404(Ambiente, nombre=ambiente_name, sede=sede)
@@ -59,8 +66,10 @@ def edit_environment(request, sede_slug, ambiente_name):
     return redirect('environment_detail', sede_slug=sede_slug)
 
 # Vista para agregar una nueva sede institucional
-@login_required
 def add_sede(request):
+    if not request.session.get('user_id'):
+        return redirect('login')
+
     if request.method == "POST":
         nombre = request.POST.get('nombre_sede')
         descripcion = request.POST.get('descripcion', '')
@@ -79,8 +88,10 @@ def add_sede(request):
     return redirect('environment_list')
 
 # Vista para modificar la información de una sede
-@login_required
 def edit_sede(request, sede_slug):
+    if not request.session.get('user_id'):
+        return redirect('login')
+
     sede = get_object_or_404(Sede, slug=sede_slug)
     if request.method == "POST":
         sede.nombre = request.POST.get('nuevo_nombre')

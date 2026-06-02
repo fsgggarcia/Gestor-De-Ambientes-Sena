@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Reserva
 from apps.infrastructure.models import Ambiente
@@ -15,18 +14,24 @@ def obtener_jornada(hora_str):
     else:
         return "NOCHE"
 
-@login_required
 def booking_list(request):
+    # Verificación manual
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login')
+
     # Filtramos usando el ORM de Django
-    mis_reservas = Reserva.objects.filter(user=request.user).order_by('-fecha_inicio')
+    mis_reservas = Reserva.objects.filter(user_id=user_id).order_by('-fecha_inicio')
     context = {
         'reservations': mis_reservas,
         'titulo_pagina': 'Mis Reservas Personales'
     }
     return render(request, 'booking_list.html', context)
 
-@login_required
 def environment_bookings(request, ambiente_name):
+    if not request.session.get('user_id'):
+        return redirect('login')
+
     # Filtramos por el nombre del ambiente relacionado
     reservas_ambiente = Reserva.objects.filter(ambiente__nombre=ambiente_name)
     context = {
@@ -36,8 +41,11 @@ def environment_bookings(request, ambiente_name):
     return render(request, 'environment_bookings.html', context)
 
 # Vista para el formulario de reserva
-@login_required
 def reserve_view(request, ambiente_name):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login')
+
     if request.method == "POST":
         instructor = request.POST.get('instructor').upper()
         materia = request.POST.get('materia').upper()
@@ -51,8 +59,8 @@ def reserve_view(request, ambiente_name):
             messages.error(request, "La hora de fin debe ser posterior a la hora de inicio.")
             return render(request, 'reserve_form.html', {'ambiente': ambiente_name, 'booking': request.POST})
 
-        # Obtener o crear instructor en el directorio
-        Instructor.objects.get_or_create(nombre=instructor, defaults={'materia': materia})
+        # Obtener o crear instructor en el directorio y capturar el objeto
+        instructor_obj, _ = Instructor.objects.get_or_create(nombre=instructor, defaults={'materia': materia})
         
         # Obtener objeto ambiente
         ambiente_obj = get_object_or_404(Ambiente, nombre=ambiente_name)
@@ -73,13 +81,12 @@ def reserve_view(request, ambiente_name):
         # Guardar en la base de datos
         Reserva.objects.create(
             ambiente=ambiente_obj,
-            instructor=instructor,
-            materia=materia,
+            instructor=instructor_obj,
             hora_inicio=inicio,
             hora_fin=fin,
             fecha_inicio=fecha_inicio,
             fecha_fin=fecha_fin,
-            user=request.user,
+            user_id=user_id,
             jornada=obtener_jornada(inicio)
         )
 
@@ -88,27 +95,40 @@ def reserve_view(request, ambiente_name):
         
     return render(request, 'reserve_form.html', {'ambiente': ambiente_name, 'instructores': Instructor.objects.all()})
 
-@login_required
 def delete_booking(request, booking_id):
+    # Verificación manual de sesión
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login')
+
     reserva = get_object_or_404(Reserva, id=booking_id)
-    if request.user == reserva.user or request.user.is_superuser:
+    # Es más eficiente comparar directamente con user_id para evitar una consulta extra a la DB
+    if user_id == reserva.user_id:
         reserva.delete()
         messages.success(request, "Reserva eliminada exitosamente.")
     else:
         messages.error(request, "No tienes permiso para eliminar esta reserva.")
     return redirect('booking_list')
 
-@login_required
 def edit_booking(request, booking_id):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login')
+
     reserva = get_object_or_404(Reserva, id=booking_id)
 
-    if not (request.user == reserva.user or request.user.is_superuser):
+    if user_id != reserva.user_id:
         messages.error(request, "No tienes permiso para editar esta reserva.")
         return redirect('booking_list')
 
     if request.method == "POST":
-        reserva.instructor = request.POST.get('instructor').upper()
-        reserva.materia = request.POST.get('materia').upper()
+        instructor_nombre = request.POST.get('instructor').upper()
+        materia_nombre = request.POST.get('materia').upper()
+        
+        # Sincronizar con la tabla de instructores para que siempre quede el registro
+        instructor_obj, _ = Instructor.objects.get_or_create(nombre=instructor_nombre, defaults={'materia': materia_nombre})
+        
+        reserva.instructor = instructor_obj
         reserva.hora_inicio = request.POST.get('hora_inicio')
         reserva.hora_fin = request.POST.get('hora_fin')
         reserva.fecha_inicio = request.POST.get('fecha_inicio')

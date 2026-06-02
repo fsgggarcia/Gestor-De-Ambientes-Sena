@@ -44,7 +44,7 @@
                 <!-- Campo: Qué instruye (Materia) -->
                 <div class="mb-3">
                     <label for="materia" class="form-label fw-semibold">Lo que instruye (Materia/Programa)</label>
-                    <input type="text" name="materia" id="materia" class="form-control" placeholder="Ej: Programación de Software" value="{{ booking.materia|default_if_none:'' }}" required>
+                    <input type="text" name="materia" id="materia" class="form-control" placeholder="Ej: Programación de Software" value="{{ booking.instructor.materia|default_if_none:'' }}" required>
                 </div>
 
                 <!-- Campos: Fecha de Inicio y Fin -->

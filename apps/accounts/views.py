@@ -1,6 +1,5 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import user as custom_user, role as account_role
@@ -10,6 +9,16 @@ from django.contrib.auth.hashers import make_password, check_password
 
 # Vista para manejar el inicio de sesión de los usuarios
 def login_view(request):
+    # Si el usuario ya tiene sesión iniciada, lo mandamos a donde quería ir o a sedes
+    user_id = request.session.get('user_id')
+    if user_id:
+        # Obtenemos 'next' de la URL o del formulario (POST)
+        next_url = request.GET.get('next') or request.POST.get('next')
+        # Evitamos redirigir si next es el propio login o está vacío
+        if next_url and next_url.strip() and next_url != request.path:
+            return redirect(next_url)
+        return redirect('add_sede')
+
     if request.method == "POST":
         username_val = request.POST.get('username', '').strip()
         password_val = request.POST.get('password', '').strip()
@@ -20,31 +29,41 @@ def login_view(request):
             return render(request, "login.html")
 
         # 1. Búsqueda en la tabla personalizada 'accounts_user'
+        # Usamos __iexact para que no importe si el usuario escribe Admin o admin
         user_record = custom_user.objects.filter(
-            username=username_val, 
+            username__iexact=username_val, 
             is_active=True
         ).first()
 
         # 2. Verificación de credenciales
-        if user_record and check_password(password_val, user_record.password):
+        if user_record:
+            # Intentamos verificar con la encriptación estándar de Django
+            password_correct = check_password(password_val, user_record.password)
             
-            # 3. Validar que el rol sea ID 1
-            # Verificamos que role_id no sea None antes de comparar
-            if user_record.role_id_id != 1:
-                messages.error(request, "Acceso denegado: No tiene permisos de administrador.")
-                return render(request, "login.html")
+            # "Salvavidas": Si falla, revisamos si la clave coincide en texto plano (usuarios viejos del Admin)
+            if not password_correct and password_val == user_record.password:
+                password_correct = True
+                # Aprovechamos para encriptarla ahora mismo; así la próxima vez será más seguro
+                user_record.password = make_password(password_val)
+                user_record.save()
 
-            # 4. Iniciar sesión
-            request.session['user_id'] = user_record.id
-            request.session['username'] = user_record.username
-            
-            messages.success(request, "¡Bienvenido!")
-            return redirect('add_sede')
-        
-        else:
-            # Error genérico por seguridad
-            messages.error(request, "Usuario o contraseña incorrectos.")
-            return render(request, "login.html")
+            if password_correct:
+                # 4. Iniciar sesión manual
+                request.session['user_id'] = user_record.id
+                request.session['username'] = user_record.username
+                request.session.modified = True  # Forzamos el guardado de la sesión
+                request.session.save() # Guardar explícitamente la sesión
+                
+                messages.success(request, "¡Bienvenido al sistema!")
+                
+                # Si venía de otra página, lo devolvemos allá, si no, a sedes
+                next_url = request.GET.get('next') or request.POST.get('next')
+                if next_url and next_url.strip() and next_url != request.path:
+                    return redirect(next_url)
+                return redirect('add_sede')
+
+        # Si llegamos aquí es porque el usuario no existe o la contraseña falló
+        messages.error(request, "Usuario o contraseña incorrectos.")
             
     # 5. Si no es POST, mostrar el formulario
     return render(request, "login.html")
@@ -53,50 +72,51 @@ def login_view(request):
 
 # Vista para cerrar la sesión actual
 def logout_view(request):
-    logout(request)
+    # Limpiamos la sesión manual
+    request.session.flush()
     messages.info(request, "Has cerrado sesión exitosamente.")
     return redirect('login')
 
 # Vista para ver y editar el perfil del usuario
-@login_required
 def profile_view(request):
-    user = request.user
+    # Verificación manual de sesión
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('login')
+
+    user_record = custom_user.objects.get(id=user_id)
+    all_users = custom_user.objects.all()
+
     if request.method == "POST":
-        # Capturamos los datos del formulario de modificación
-        user.first_name = request.POST.get('first_name')
-        user.last_name = request.POST.get('last_name')
-        user.email = request.POST.get('email')
-        user.save()
+        user_record.username = request.POST.get('username')
+        user_record.save()
         messages.success(request, "Tu perfil ha sido actualizado correctamente.")
         return redirect('profile')
-    return render(request, 'profile.html', {'user': user})
+    return render(request, 'profile.html', {'user': user_record, 'all_users': all_users})
 
-# Vista para el registro de nuevos usuarios
+# Eliminamos register_view estándar porque crea usuarios en la tabla equivocada
 def register_view(request):
-    if request.method == "POST":
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            # form.save() guarda el usuario en la base de datos de forma permanente
-            user = form.save()
-            
-            # Si el usuario NO está logueado, hacemos auto-login (flujo normal de registro)
-            if not request.user.is_authenticated:
-                login(request, user)
-                messages.success(request, f"¡Cuenta creada exitosamente! Bienvenido, {user.username}.")
-                return redirect('index')
-            else:
-                # Si ya estás logueado, solo confirmamos la creación y volvemos al perfil
-                messages.success(request, f"Usuario '{user.username}' creado correctamente.")
-                return redirect('profile')
-        else:
-            messages.error(request, "No se pudo crear la cuenta. Verifica que la contraseña sea segura.")
+    return redirect('custom_register')
+
+def delete_user(request, user_id):
+    # Verificación manual de sesión
+    admin_id = request.session.get('user_id')
+    if not admin_id:
+        return redirect('login')
+    
+    user_to_delete = get_object_or_404(custom_user, id=user_id)
+    
+    if user_to_delete.id == admin_id:
+        messages.warning(request, "No puedes eliminar tu propio perfil desde la lista de gestión.")
     else:
-        form = UserCreationForm()
-    return render(request, "register.html", {"form": form})
+        user_to_delete.delete()
+        messages.success(request, "Perfil eliminado exitosamente.")
+    return redirect('profile')
 
 # Vista para el registro manual en la tabla personalizada 
-@login_required
 def custom_register_view(request):
+    # Permitimos el registro sin estar logueado para que nuevos usuarios puedan unirse
+
     if request.method == "POST":
         username_val = request.POST.get('username')
         password_val = request.POST.get('password')
@@ -110,14 +130,20 @@ def custom_register_view(request):
 
             # Guardamos manualmente en la tabla personalizada 'accounts_user'
             # Usamos make_password para que la clave sea segura (formato de 128 caracteres)
-            custom_user.objects.create(
+            new_user = custom_user.objects.create(
                 username=username_val,
                 password=make_password(password_val),
                 role_id=role_obj,
                 is_active=True
             )
-            messages.success(request, f"Usuario '{username_val}' registrado exitosamente en la tabla personalizada.")
-            return redirect('profile')
+            
+            # AUTO-LOGIN: Iniciamos la sesión inmediatamente para que no lo rebote al login
+            request.session['user_id'] = new_user.id
+            request.session['username'] = new_user.username
+            request.session.save() # Guardar explícitamente la sesión
+
+            messages.success(request, f"¡Bienvenido, {username_val}! Tu cuenta ha sido creada.")
+            return redirect('add_sede')
         else:
             messages.error(request, "El nombre de usuario y la contraseña son obligatorios.")
 
