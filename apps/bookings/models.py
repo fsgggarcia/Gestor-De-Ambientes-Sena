@@ -1,6 +1,12 @@
 from django.db import models
 from apps.infrastructure.models import Ambiente
 
+class Programa(models.Model):
+    nombre = models.CharField(max_length=150, unique=True)
+
+    def __str__(self):
+        return self.nombre
+
 class Reserva(models.Model):
     ambiente = models.ForeignKey(Ambiente, on_delete=models.CASCADE)
     instructor = models.ForeignKey('directory.Instructor', on_delete=models.CASCADE)
